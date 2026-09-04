@@ -1,0 +1,29 @@
+# Oracle / local
+*.log
+*.trc
+*.aud
+
+# ODI
+*.lck
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Secrets
+.env
+*.env
+credentials.*
+secrets.*
+
+# Local temporary files
+temp/
+tmp/
+
+# Java
+hs_err_pid*
