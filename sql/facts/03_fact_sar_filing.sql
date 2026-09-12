@@ -1,0 +1,41 @@
+-- ============================================================
+-- AML Smurfing Detection
+-- Fact: FACT_SAR_FILING
+-- ============================================================
+
+INSERT INTO DWH_AML.FACT_SAR_FILING (
+    SAR_FILING_SK,
+    CASE_SK,
+    MUSTERI_SK,
+    GONDERIM_TARIH_SK,
+    ILISKILI_TOPLAM_TUTAR,
+    SAR_DURUM
+)
+SELECT
+    DWH_AML.SEQ_FACT_SAR_FILING.NEXTVAL,
+    c.CASE_SK,
+    c.MUSTERI_SK,
+    c.KAPANIS_TARIH_SK,
+    c.ILISKILI_TUTAR,
+    'Gönderildi'
+FROM DWH_AML.FACT_CASE c
+JOIN DWH_AML.DIM_CASE_DURUM d
+    ON d.DURUM_SK = c.DURUM_SK
+WHERE d.DURUM_KODU = 'SAR_GONDERILDI'
+  AND c.KAPANIS_TARIH_SK IS NOT NULL
+  AND NOT EXISTS (
+      SELECT 1
+      FROM DWH_AML.FACT_SAR_FILING s
+      WHERE s.CASE_SK = c.CASE_SK
+  );
+
+
+COMMIT;
+
+
+-- SAR validation
+SELECT
+    COUNT(*) AS SAR_SAYISI,
+    COUNT(DISTINCT CASE_SK) AS DISTINCT_CASE_SAYISI,
+    SUM(ILISKILI_TOPLAM_TUTAR) AS TOPLAM_SAR_TUTARI
+FROM DWH_AML.FACT_SAR_FILING;

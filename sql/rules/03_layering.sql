@@ -4,11 +4,10 @@
 -- ============================================================
 
 -- İş mantığı:
--- Para A -> B -> C -> D şeklinde 3+ hop'ta aktarılıyorsa
--- ve zincir 6 saat içerisinde gerçekleşiyorsa şüpheli kabul edilir.
+-- A -> B -> C -> D gibi 3 veya daha fazla hop içeren
+-- transfer zincirlerinin 6 saatlik pencere içinde izlenmesi.
 
 CREATE OR REPLACE VIEW STG_AML.LAYERING_SCORE_VW AS
-
 WITH RECURSIVE_ZINCIR (
     BASLANGIC_HESAP,
     MEVCUT_HESAP,
@@ -17,8 +16,6 @@ WITH RECURSIVE_ZINCIR (
     ILK_TARIH,
     SON_TARIH
 ) AS (
-
-    -- İlk transfer
     SELECT
         GONDEREN_HESAP,
         ALICI_HESAP,
@@ -31,7 +28,6 @@ WITH RECURSIVE_ZINCIR (
 
     UNION ALL
 
-    -- Zincirin devamı
     SELECT
         z.BASLANGIC_HESAP,
         t.ALICI_HESAP,
@@ -39,18 +35,14 @@ WITH RECURSIVE_ZINCIR (
         z.HOP_SAYISI + 1,
         z.ILK_TARIH,
         t.ISLEM_TARIHI
-
     FROM RECURSIVE_ZINCIR z
-
     JOIN STG_AML.STG_PARA_TRANSFERLERI t
-        ON z.MEVCUT_HESAP = t.GONDEREN_HESAP
+        ON t.GONDEREN_HESAP = z.MEVCUT_HESAP
        AND t.ISLEM_TARIHI > z.SON_TARIH
        AND t.ISLEM_TARIHI <= z.ILK_TARIH + (6.0 / 24)
-       AND z.HOP_SAYISI < 5
-
     WHERE t.TIP = 'TRANSFER'
+      AND z.HOP_SAYISI < 5
 )
-
 SELECT
     BASLANGIC_HESAP,
     MEVCUT_HESAP AS SON_HESAP,

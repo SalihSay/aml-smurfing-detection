@@ -4,9 +4,8 @@
 -- ============================================================
 
 -- İş mantığı:
--- Aynı gönderen hesaptan 24 saat içinde,
--- her biri 10.000'in altında,
--- en az 3 CASH_IN / TRANSFER işlemi.
+-- Aynı gönderici hesaptan 24 saat içinde,
+-- 10.000'in altında en az 3 işlem gerçekleşmesi.
 
 CREATE OR REPLACE VIEW STG_AML.STRUCTURING_SCORE_VW AS
 SELECT
@@ -30,16 +29,12 @@ WHERE TIP IN ('CASH_IN', 'TRANSFER')
   AND TUTAR < 10000;
 
 
--- CKM entegrasyonu
-
-INSERT INTO STG_AML.E$_PARA_TRANSFERLERI
+-- Şüpheli structuring pencerelerini görüntüle
 SELECT
-    t.*,
-    'STRUCTURING_PATTERN_DETECTED',
-    s.ISLEM_SAYISI_24S,
-    NULL
-FROM STG_AML.STG_PARA_TRANSFERLERI t
-JOIN STG_AML.STRUCTURING_SCORE_VW s
-    ON t.GONDEREN_HESAP = s.HESAP
-   AND t.ISLEM_TARIHI = s.ISLEM_TARIHI
-WHERE s.ISLEM_SAYISI_24S >= 3;
+    HESAP,
+    ISLEM_TARIHI,
+    ISLEM_SAYISI_24S,
+    TOPLAM_TUTAR_24S
+FROM STG_AML.STRUCTURING_SCORE_VW
+WHERE ISLEM_SAYISI_24S >= 3
+ORDER BY ISLEM_TARIHI;

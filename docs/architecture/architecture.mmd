@@ -1,0 +1,23 @@
+flowchart LR
+    A[PaySim CSV] --> B[ODI 12c]
+    B --> C[STG_AML]
+
+    C --> D[CKM AML Rule Engine]
+    D --> E[E$ Alarm Layer]
+
+    C --> F[DWH_AML Star Schema]
+    E --> G[FACT_CASE]
+    G --> H[FACT_SAR_FILING]
+
+    F --> I[GRAPH_EDGE_LIST]
+    I --> J[GRAPH_METRICS]
+
+    F --> K[FACT_MODEL_PERFORMANS]
+    F --> L[DQ_LOG / ETL_AUDIT_LOG]
+    F --> M[DIM_HESAP_MASKELI_VW]
+
+    M --> N[Metabase OSS]
+    J --> N
+    G --> N
+    H --> N
+    K --> N

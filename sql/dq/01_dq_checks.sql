@@ -1,0 +1,68 @@
+-- ============================================================
+-- AML Smurfing Detection
+-- Data Quality Checks
+-- Expected result: 0
+-- ============================================================
+
+
+-- 1. FACT -> sender account orphan
+SELECT COUNT(*) AS ORPHAN_GONDEREN
+FROM DWH_AML.FACT_PARA_TRANSFERLERI f
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM DWH_AML.DIM_HESAP h
+    WHERE h.HESAP_SK = f.GONDEREN_HESAP_SK
+);
+
+
+-- 2. FACT -> receiver account orphan
+SELECT COUNT(*) AS ORPHAN_ALICI
+FROM DWH_AML.FACT_PARA_TRANSFERLERI f
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM DWH_AML.DIM_HESAP h
+    WHERE h.HESAP_SK = f.ALICI_HESAP_SK
+);
+
+
+-- 3. GRAPH -> account orphan
+SELECT COUNT(*) AS ORPHAN_GRAPH_EDGES
+FROM DWH_AML.GRAPH_EDGE_LIST e
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM DWH_AML.DIM_HESAP h
+    WHERE h.HESAP_SK = e.SOURCE_NODE
+)
+OR NOT EXISTS (
+    SELECT 1
+    FROM DWH_AML.DIM_HESAP h
+    WHERE h.HESAP_SK = e.TARGET_NODE
+);
+
+
+-- 4. Active account business-key duplicates
+SELECT
+    COUNT(*) - COUNT(DISTINCT HESAP_ID)
+        AS ACTIVE_ACCOUNT_DUPLICATES
+FROM DWH_AML.DIM_HESAP
+WHERE SCD_AKTIF_FLAG = '1';
+
+
+-- 5. SAR -> CASE orphan
+SELECT COUNT(*) AS ORPHAN_SAR_CASE
+FROM DWH_AML.FACT_SAR_FILING s
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM DWH_AML.FACT_CASE c
+    WHERE c.CASE_SK = s.CASE_SK
+);
+
+
+-- 6. CASE -> CUSTOMER orphan
+SELECT COUNT(*) AS ORPHAN_CASE_CUSTOMER
+FROM DWH_AML.FACT_CASE c
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM DWH_AML.DIM_MUSTERI m
+    WHERE m.MUSTERI_SK = c.MUSTERI_SK
+);

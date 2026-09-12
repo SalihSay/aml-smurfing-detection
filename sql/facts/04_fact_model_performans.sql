@@ -3,16 +3,8 @@
 -- Fact: FACT_MODEL_PERFORMANS
 -- ============================================================
 
--- AML kural performansının zaman içerisindeki takibi.
---
--- Ölçümler:
---   TOPLAM_ALARM
---   GERCEK_POZITIF
---   YANLIS_POZITIF
---   RECALL
---   PRECISION
-
 INSERT INTO DWH_AML.FACT_MODEL_PERFORMANS (
+    MODEL_PERFORMANS_SK,
     MODEL_SK,
     TARIH_SK,
     TOPLAM_ALARM,
@@ -22,13 +14,9 @@ INSERT INTO DWH_AML.FACT_MODEL_PERFORMANS (
     PRECISION_DEGERI
 )
 SELECT
-    (
-        SELECT MODEL_SK
-        FROM DWH_AML.DIM_MODEL_VERSIYON
-        WHERE MODEL_ADI = 'Smurfing'
-    ),
-
-    TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD')),
+    DWH_AML.SEQ_MODEL_PERFORMANS.NEXTVAL,
+    e.MODEL_SK,
+    dt.TARIH_SK,
 
     COUNT(*) AS TOPLAM_ALARM,
 
@@ -52,7 +40,7 @@ SELECT
                 WHEN t.IS_FRAUD = 1 THEN 1
                 ELSE 0
             END
-        ) * 1.0
+        )
         /
         NULLIF(
             (
@@ -71,19 +59,39 @@ SELECT
                 WHEN t.IS_FRAUD = 1 THEN 1
                 ELSE 0
             END
-        ) * 1.0
-        /
-        NULLIF(COUNT(*), 0),
+        )
+        / NULLIF(COUNT(*), 0),
         4
     ) AS PRECISION_DEGERI
 
 FROM STG_AML.E$_PARA_TRANSFERLERI e
 
 JOIN STG_AML.STG_PARA_TRANSFERLERI t
-    ON e.GONDEREN_HESAP = t.GONDEREN_HESAP
-   AND e.ALICI_HESAP = t.ALICI_HESAP
-   AND e.ISLEM_TARIHI = t.ISLEM_TARIHI
+    ON t.GONDEREN_HESAP = e.GONDEREN_HESAP
+   AND t.ALICI_HESAP = e.ALICI_HESAP
+   AND t.ISLEM_TARIHI = e.ISLEM_TARIHI
 
-WHERE e.HATA_SEBEBI = 'SMURFING_PATTERN_DETECTED';
+JOIN DWH_AML.DIM_TARIH dt
+    ON dt.TARIH = TRUNC(e.ISLEM_TARIHI)
+
+WHERE e.HATA_SEBEBI = 'SMURFING_PATTERN_DETECTED'
+
+GROUP BY
+    e.MODEL_SK,
+    dt.TARIH_SK;
+
 
 COMMIT;
+
+
+-- Current model performance
+SELECT
+    MODEL_SK,
+    TARIH_SK,
+    TOPLAM_ALARM,
+    GERCEK_POZITIF,
+    YANLIS_POZITIF,
+    RECALL,
+    PRECISION_DEGERI
+FROM DWH_AML.FACT_MODEL_PERFORMANS
+ORDER BY TARIH_SK, MODEL_SK;

@@ -3,53 +3,62 @@
 -- Fact: FACT_PARA_TRANSFERLERI
 -- ============================================================
 
--- Star Schema fact yükleme mantığı.
---
--- Gönderen ve alıcı için aynı DIM_HESAP iki farklı rolde
--- kullanılır:
---   1. GONDEREN_HESAP_SK
---   2. ALICI_HESAP_SK
---
--- Bu yapıya Role-Playing Dimension denir.
-
-INSERT INTO DWH_AML.FACT_PARA_TRANSFERLERI
+INSERT INTO DWH_AML.FACT_PARA_TRANSFERLERI (
+    PARA_TRANSFER_SK,
+    TARIH_SK,
+    GONDEREN_HESAP_SK,
+    ALICI_HESAP_SK,
+    MODEL_SK,
+    STEP,
+    TIP,
+    TUTAR,
+    ESKI_BAKIYE_GONDEREN,
+    YENI_BAKIYE_GONDEREN,
+    ESKI_BAKIYE_ALICI,
+    YENI_BAKIYE_ALICI,
+    IS_FRAUD,
+    IS_FLAGGED_FRAUD,
+    ISLEM_TARIHI
+)
 SELECT
-    -- tarih dimension lookup
+    DWH_AML.SEQ_FACT_PARA_TRANSFERLERI.NEXTVAL,
     dt.TARIH_SK,
-
-    -- gönderen hesap dimension lookup
     dh_gonderen.HESAP_SK,
-
-    -- alıcı hesap dimension lookup
     dh_alici.HESAP_SK,
-
+    NULL AS MODEL_SK,
+    t.STEP,
     t.TIP,
     t.TUTAR,
+    t.ESKI_BAKIYE_GONDEREN,
+    t.YENI_BAKIYE_GONDEREN,
+    t.ESKI_BAKIYE_ALICI,
+    t.YENI_BAKIYE_ALICI,
     t.IS_FRAUD,
     t.IS_FLAGGED_FRAUD,
     t.ISLEM_TARIHI
-
 FROM STG_AML.STG_PARA_TRANSFERLERI t
-
 JOIN DWH_AML.DIM_HESAP dh_gonderen
-    ON t.GONDEREN_HESAP = dh_gonderen.HESAP_ID
+    ON dh_gonderen.HESAP_ID = t.GONDEREN_HESAP
    AND dh_gonderen.SCD_AKTIF_FLAG = '1'
-
 JOIN DWH_AML.DIM_HESAP dh_alici
-    ON t.ALICI_HESAP = dh_alici.HESAP_ID
+    ON dh_alici.HESAP_ID = t.ALICI_HESAP
    AND dh_alici.SCD_AKTIF_FLAG = '1'
-
 JOIN DWH_AML.DIM_TARIH dt
-    ON TRUNC(t.ISLEM_TARIHI) = dt.TARIH;
+    ON dt.TARIH = TRUNC(t.ISLEM_TARIHI);
 
 COMMIT;
 
 
--- Referential integrity kontrolü
-SELECT COUNT(*)
+-- Referential integrity validation
+SELECT COUNT(*) AS ORPHAN_HESAP_KEYS
 FROM DWH_AML.FACT_PARA_TRANSFERLERI f
 WHERE NOT EXISTS (
     SELECT 1
     FROM DWH_AML.DIM_HESAP d
     WHERE d.HESAP_SK = f.GONDEREN_HESAP_SK
+)
+OR NOT EXISTS (
+    SELECT 1
+    FROM DWH_AML.DIM_HESAP d
+    WHERE d.HESAP_SK = f.ALICI_HESAP_SK
 );

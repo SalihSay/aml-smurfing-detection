@@ -4,8 +4,8 @@
 -- ============================================================
 
 -- İş mantığı:
--- A -> B -> ... -> A
--- Para dolaşıp başlangıç hesabına geri dönüyorsa şüpheli.
+-- Para A -> B -> ... -> A şeklinde başlangıç hesabına
+-- geri dönüyorsa round-trip şüphesi oluşturur.
 
 CREATE OR REPLACE VIEW STG_AML.ROUNDTRIP_SCORE_VW AS
 SELECT
@@ -16,3 +16,14 @@ SELECT
     z.SON_TARIH
 FROM STG_AML.LAYERING_SCORE_VW z
 WHERE z.BASLANGIC_HESAP = z.SON_HESAP;
+
+
+-- Şüpheli round-trip zincirlerini görüntüle
+SELECT
+    BASLANGIC_HESAP,
+    SON_HESAP,
+    HOP_SAYISI,
+    ILK_TARIH,
+    SON_TARIH
+FROM STG_AML.ROUNDTRIP_SCORE_VW
+ORDER BY ILK_TARIH;
