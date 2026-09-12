@@ -67,22 +67,23 @@ The ETL layer was implemented with **Oracle Data Integrator 12c**.
 
 ### Pipeline
 
-```text
-PaySim CSV
-    ↓
-Oracle Staging
-    ↓
-ODI ETL / Mappings
-    ↓
-CKM Validation
-    ↓
-AML Rule Processing
-    ↓
-Oracle Data Warehouse
-    ↓
-BI / Analytics
+**PaySim CSV → Oracle Staging → ODI ETL / Mappings → CKM Validation → AML Rule Processing → Oracle Data Warehouse → BI / Analytics**
 
 ODI was used for:
+
+- Data movement
+- Mappings
+- Lookups
+- Dimension loading
+- Fact loading
+- CKM-based validation
+- Integration between staging and DWH layers
+
+### ODI Portfolio Evidence
+
+The repository contains the exported ODI Designer project:
+
+`odi-exports/`
 
 Data movement
 Mappings
