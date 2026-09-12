@@ -26,59 +26,41 @@ A production-oriented AML analytics platform designed around **6.36M+ financial 
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
-    A[PaySim CSV] --> B[ODI 12c]
-    B --> C[STG_AML]
+    A[PaySim CSV] --> B[Oracle STG]
+    B --> C[ODI 12c ETL]
+    C --> D[Oracle DWH]
 
-    C --> D[CKM AML Rule Engine]
-    D --> E[E$ Alarm Layer]
+    D --> E[AML Rule Engine]
+    E --> F[Alarm / E$]
 
-    C --> F[DWH_AML Star Schema]
-    E --> G[FACT_CASE]
-    G --> H[FACT_SAR_FILING]
+    D --> G[Case Management]
+    G --> H[SAR Filing]
 
-    F --> I[GRAPH_EDGE_LIST]
-    I --> J[GRAPH_METRICS]
+    D --> I[Graph Edge List]
+    I --> J[Graph Metrics]
 
-    F --> K[FACT_MODEL_PERFORMANS]
-    F --> L[DQ_LOG / ETL_AUDIT_LOG]
-    F --> M[DIM_HESAP_MASKELI_VW]
+    D --> K[Metabase OSS]
+    F --> K
+    G --> K
+    H --> K
+    J --> K
+```
 
-    M --> N[Metabase OSS]
-    J --> N
-    G --> N
-    H --> N
-    K --> N
+## What I Built
 
+### 1. Data Warehouse
 
-🔧 What I Built
-1. Data Warehouse
-
-Designed an Oracle-based dimensional data warehouse using a star-schema approach.
-
-Dimensions
-DIM_CALISAN
-DIM_CASE_DURUM
-DIM_HESAP
-DIM_MODEL_VERSIYON
-DIM_MUSTERI
-DIM_TARIH
-DIM_ULKE
-Facts
-FACT_PARA_TRANSFERLERI
-FACT_CASE
-FACT_SAR_FILING
-FACT_MODEL_PERFORMANS
-SCD Type 2
-
-Implemented SCD Type 2 on DIM_HESAP to preserve account history using:
-
-surrogate keys
-effective start/end dates
-active record flags
+- Oracle 19c üzerinde star-schema tabanlı DWH
+- 7 dimension
+- 4 fact
+- `DIM_HESAP` ve `DIM_MUSTERI` üzerinde SCD Type 2
+- Surrogate key yaklaşımı
+- Foreign key ilişkileri
+- 
 2. ETL with ODI 12c
 
 Built the ETL flow using Oracle Data Integrator 12c.
