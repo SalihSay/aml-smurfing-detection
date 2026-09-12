@@ -1,82 +1,64 @@
-# AML Smurfing Detection
+<img width="1192" height="302" alt="Ekran görüntüsü 2026-09-12 131251" src="https://github.com/user-attachments/assets/9e271f88-bac7-456b-a455-e4114f7f9317" /># AML Smurfing Detection — Data Warehouse & BI
 
-Oracle 19c, Oracle Data Integrator 12c (ODI), Metabase OSS ve PaySim verisi kullanılarak geliştirilmiş uçtan uca bir AML / Smurfing Detection Data Warehouse ve BI projesidir.
+**End-to-end Data Warehouse & Business Intelligence project built with Oracle 19c, ODI 12c and Metabase OSS.**
 
-Proje; şüpheli para transferlerinin kural tabanlı olarak tespit edilmesini, alarm verisinin analitik modele aktarılmasını, hesaplar arasındaki transfer ağının incelenmesini ve alarm → case → SAR akışının raporlanmasını amaçlamaktadır.
+A production-oriented AML analytics platform designed around **6.36M+ financial transactions**, combining dimensional modeling, ETL, SCD Type 2, data quality, rule-based analytics, network analysis and operational BI.
 
----
-
-## 1. Business Problem
-
-Finansal işlemler içerisinde AML açısından şüpheli davranışların tespit edilmesi, yalnızca tekil işlemlerin incelenmesinden ziyade işlem desenlerinin ve hesaplar arasındaki ilişkilerin birlikte değerlendirilmesini gerektirir.
-
-Bu projede aşağıdaki AML tipolojileri modellenmiştir:
-
-- Smurfing
-- Structuring
-- Layering
-- Round Trip
-- Dormant Account Reactivation
-- Round Amount
-
-Amaç; veri alımından başlayarak staging, kural motoru, data warehouse, network analizi, operasyonel case yönetimi ve BI raporlamasını tek bir analitik akışta birleştirmektir.
+> **Business problem:** Detect suspicious transaction patterns and transform them into an analyzable and operational workflow from **transaction → alarm → case → SAR → BI reporting**.
 
 ---
 
-## 2. Architecture
+## 📊 Project at a Glance
 
-```text
-                         PaySim CSV
-                             |
-                             v
-                    Oracle / STG_AML
-                             |
-                    +--------+--------+
-                    |                 |
-                ODI 12c          AML Rule Layer
-                    |                 |
-                    +--------+--------+
-                             |
-                             v
-                         DWH_AML
-                             |
-          +------------------+------------------+
-          |                  |                  |
-      Dimensions          Facts          Graph Layer
-          |                  |                  |
-          |                  |          GRAPH_EDGE_LIST
-          |                  |          GRAPH_METRICS
-          |                  |
-          |            FACT_CASE
-          |            FACT_SAR_FILING
-          |            FACT_MODEL_PERFORMANS
-          |            FACT_PARA_TRANSFERLERI
-          |
-          +------------------+
-                             |
-                 DQ / Audit / Masking
-                             |
-                             v
-                       Metabase OSS
-                             |
-             +---------------+---------------+
-             |               |               |
-          AML - Uyum     AML - Risk     AML - Şube
-Teknoloji Stack
-Oracle Database 19c
-Oracle Data Integrator 12c
-ODI CKM / IKM
-PaySim
-Metabase OSS
-Docker
-Oracle SQL
-Git / GitHub
+| Metric | Result |
+|---|---:|
+| Financial Transactions | **6,362,620** |
+| Active Accounts | **9,073,900** |
+| AML Typologies | **6** |
+| Cases | **3,508** |
+| SAR Filings | **175** |
+| DQ Checks | **11 / 11 PASS** |
+| Smurfing Test Precision | **100%** |
 
-Gephi projeye dahil edilmemiştir. Network analizi Oracle tarafındaki graph tabloları ve Metabase raporlaması üzerinden yürütülmektedir.
+### Core Technology
 
-3. Data Warehouse
+`Oracle 19c` · `ODI 12c` · `SQL` · `PaySim` · `Metabase OSS` · `Docker` · `Git/GitHub`
 
-DWH katmanında star-schema yaklaşımı kullanılmıştır.
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    A[PaySim CSV] --> B[ODI 12c]
+    B --> C[STG_AML]
+
+    C --> D[CKM AML Rule Engine]
+    D --> E[E$ Alarm Layer]
+
+    C --> F[DWH_AML Star Schema]
+    E --> G[FACT_CASE]
+    G --> H[FACT_SAR_FILING]
+
+    F --> I[GRAPH_EDGE_LIST]
+    I --> J[GRAPH_METRICS]
+
+    F --> K[FACT_MODEL_PERFORMANS]
+    F --> L[DQ_LOG / ETL_AUDIT_LOG]
+    F --> M[DIM_HESAP_MASKELI_VW]
+
+    M --> N[Metabase OSS]
+    J --> N
+    G --> N
+    H --> N
+    K --> N
+
+<img width="1192" height="302" alt="Ekran görüntüsü 2026-09-12 131251" src="https://github.com/user-attachments/assets/1b22c54c-4216-42b0-9acb-62b4639ae2da" />
+
+🔧 What I Built
+1. Data Warehouse
+
+Designed an Oracle-based dimensional data warehouse using a star-schema approach.
 
 Dimensions
 DIM_CALISAN
@@ -86,308 +68,260 @@ DIM_MODEL_VERSIYON
 DIM_MUSTERI
 DIM_TARIH
 DIM_ULKE
-
-DIM_HESAP üzerinde SCD Type 2 uygulanmıştır.
-
-Gerçek DWH kontrolünde:
-
-9,073,900 aktif hesap
-1 geçmiş/inaktif hesap kaydı
-9,073,900 distinct aktif HESAP_ID
-
-bulunmaktadır.
-
 Facts
-
-Projede kullanılan gerçek fact tabloları:
-
 FACT_PARA_TRANSFERLERI
 FACT_CASE
 FACT_SAR_FILING
 FACT_MODEL_PERFORMANS
-4. Staging and ETL
+SCD Type 2
 
-PaySim işlemleri STG_AML.STG_PARA_TRANSFERLERI tablosuna alınmaktadır.
+Implemented SCD Type 2 on DIM_HESAP to preserve account history using:
 
-Staging tablosunda PaySim'in temel işlem alanlarının yanında proje kapsamında kullanılan CDC_ID alanı da bulunmaktadır.
+surrogate keys
+effective start/end dates
+active record flags
+2. ETL with ODI 12c
 
-E$ katmanı:
+Built the ETL flow using Oracle Data Integrator 12c.
 
-STG_AML.E$_PARA_TRANSFERLERI
+The pipeline covers:
 
-üzerinden kural ihlalleri ve alarm metadata'sı takip edilmektedir.
+PaySim CSV
+    ↓
+Staging
+    ↓
+ODI ETL
+    ↓
+CKM validation / AML rules
+    ↓
+Data Warehouse
+    ↓
+BI / Analytics
 
-ODI tarafında full-load, dimension lookup, SCD Type 2 ve CKM tabanlı kontrol yaklaşımı kullanılmıştır.
+ODI was used for data movement, mappings, lookups, integration and CKM-based validation.
 
-5. AML Rule Engine
+📌 ODI Designer project export:
 
-Altı AML tipolojisi modellenmiştir.
+odi-exports/
+
+🚨 AML Rule Engine
+
+Six AML typologies were implemented at the Oracle / ODI CKM layer.
 
 Smurfing
 
-Temel senaryo:
+Detects cases where:
 
-Aynı hedef hesaba
-24 saat içerisinde
-en az 5 farklı gönderenden
-para gelmesi
-ve kısa süre içerisinde çıkış gerçekleşmesi
+multiple distinct senders
+transfer money to the same target account
+within a 24-hour window
+followed by a short-time outgoing transaction
 
-şüpheli davranış olarak değerlendirilir.
-
-Smurfing scoring sonucu:
+The scoring result is exposed through:
 
 STG_AML.SMURFING_SCORE_VW
-
-üzerinden izlenmektedir.
-
 Structuring
 
-Aynı gönderici hesaptan 24 saat içerisinde:
-
-10.000'in altında
-en az 3 işlem
-
-gerçekleşmesi izlenmektedir.
-
-View:
+Detects repeated transactions below a defined threshold within a 24-hour window.
 
 STG_AML.STRUCTURING_SCORE_VW
 Layering
 
-Transferlerin birden fazla hop üzerinden zincir oluşturması ve kısa zaman penceresinde gerçekleşmesi incelenmektedir.
-
-View:
+Analyzes multi-hop transfer chains using recursive transfer analysis.
 
 STG_AML.LAYERING_SCORE_VW
 Round Trip
 
-Paranın:
+Identifies transaction paths returning to the originating account.
 
-A -> B -> ... -> A
-
-şeklinde başlangıç hesabına geri dönmesi izlenmektedir.
-
-View:
-
-STG_AML.ROUNDTRIP_SCORE_VW
+A → B → ... → A
 Dormant Account Reactivation
 
-Uzun süre işlem yapmayan hesabın yüksek tutarlı işlem ile yeniden aktif hale gelmesi izlenmektedir.
+Detects significant transactions following long periods of account inactivity.
 
-View:
-
-STG_AML.DORMANT_REACTIVATION_VW
 Round Amount
 
-10.000 ve üzerindeki, 1.000'in katı olan tutarlar risk sinyali olarak izlenmektedir.
+Identifies high-value round-number transactions used as an additional risk signal.
 
-View:
+🕸️ Network Risk Analysis
 
-STG_AML.ROUND_AMOUNT_VW
-6. Network Risk Analysis
-
-Hesaplar arasındaki para transferleri graph yapısına dönüştürülmüştür.
+Transaction relationships were transformed into a graph-oriented analytical layer.
 
 GRAPH_EDGE_LIST
 
-Her transfer ilişkisini:
-
-source account
-target account
-amount
-transaction date
-transaction type
-fraud flags
-
-ile birlikte temsil eder.
+Represents account-to-account transaction relationships.
 
 GRAPH_METRICS
 
-Aktif hesaplar için:
+Calculates:
 
-gelen bağlantı sayısı
-giden bağlantı sayısı
+incoming connection count
+outgoing connection count
 
-hesaplanmaktadır.
+for active accounts.
 
-Gerçek proje verisinde:
+The graph layer allows suspicious accounts to be evaluated together with their surrounding transaction network rather than only as isolated transactions.
 
-6,362,620 transfer edge
-2,722,362 hesapta gelen bağlantı
-6,353,307 hesapta giden bağlantı
-toplam 6,362,620 incoming bağlantı
-toplam 6,362,620 outgoing bağlantı
+Gephi was intentionally excluded from the final architecture. Network analysis is handled through the Oracle graph layer and Metabase reporting.
 
-bulunmaktadır.
+🗂️ Operational AML Workflow
 
-Network katmanı, yüksek riskli hesapların işlem ilişkileriyle birlikte incelenmesini sağlar.
+The project does not stop at detecting suspicious transactions.
 
-7. Case -> SAR Workflow
+The operational flow is:
 
-AML alarmı operasyonel sürecin başlangıç noktasıdır.
-
-Akış:
-
+Transaction
+     ↓
 AML Rule
-   |
-   v
+     ↓
 Alarm
-   |
-   v
+     ↓
 FACT_CASE
-   |
-   +--> ACIK
-   |
-   +--> INCELEMEDE
-   |
-   +--> KAPALI
-   |
-   +--> SAR_GONDERILDI
-             |
-             v
-      FACT_SAR_FILING
-
-Gerçek DWH durum dağılımında:
-
-ACIK: 2,283
-INCELEMEDE: 700
-KAPALI: 350
-SAR_GONDERILDI: 175
-
-case bulunmaktadır.
-
-SAR katmanında:
-
-175 SAR kaydı
-175 distinct case
-toplam 1,581,043,000 ilişkili SAR tutarı
-0 orphan case
+     ↓
+Case Investigation
+     ↓
+SAR Filing
+Case distribution
+Status	Cases
+ACIK	2,283
+INCELEMEDE	700
+KAPALI	350
+SAR_GONDERILDI	175
+SAR validation
+175 SAR records
+175 distinct cases
+1,581,043,000 total related amount
+0 orphan cases
 0 case/SAR mismatch
+📈 Model Performance
 
-doğrulanmıştır.
-
-8. Model Performance
-
-Gerçek DWH sonucunda Smurfing model performansı:
+Real DWH output:
 
 Metric	Result
-Model SK	21
-Tarih SK	20260301
-Toplam Alarm	3,508
-Gerçek Pozitif	287
-Yanlış Pozitif	3,221
+Total Alerts	3,508
+True Positives	287
+False Positives	3,221
 Recall	3.49%
 Precision	8.18%
 
-Bu sonuçlar özellikle yüksek false-positive oranının AML rule tuning açısından önemli olduğunu göstermektedir.
+The result was deliberately reported without artificially improving the metrics.
 
-Metrikler yapay olarak iyileştirilmemiş, gerçek proje çıktısı olduğu şekliyle raporlanmıştır.
+The high false-positive rate highlights the need for further AML threshold tuning and feature engineering.
 
-9. Synthetic Validation
+🧪 Synthetic Validation
 
-Rule engine kontrollü sentetik veri ile ayrıca test edilmiştir.
+A controlled Smurfing scenario was injected to validate the rule engine.
 
-Test senaryosu:
+Test scenario
+6 distinct sender accounts
+5,000 per sender
+same target account
+transactions within a 24-hour window
+short-time outgoing transaction
+Result
 
-6 farklı gönderici hesap
-her göndericiden 5,000
-aynı hedef hesap
-24 saatlik pencere
-kısa süre içerisinde çıkış işlemi
+Smurfing pattern detected successfully.
 
-oluşturularak Smurfing paterni enjekte edilmiştir.
-
-Kontrollü test sonucunda:
-
-Smurfing alarmı: yakalandı
-Precision: %100
+Precision:     100%
 False Positive: 0
 
-olarak doğrulanmıştır.
+After validation, synthetic records were removed and the baseline dataset was restored.
 
-Test tamamlandıktan sonra sentetik staging ve E$ kayıtları temizlenmiş ve baseline veri korunmuştur.
+✅ Data Quality & Audit
 
-10. Data Quality & Audit
-
-Data quality kontrolleri için:
+Data quality and ETL monitoring were implemented through:
 
 DWH_AML.DQ_LOG
-
-ETL audit takibi için:
-
 DWH_AML.ETL_AUDIT_LOG
 
-kullanılmaktadır.
+Validation coverage includes:
 
-Kontrol kapsamı:
-
-orphan key
-duplicate business key
-null kontrolü
-row count
-fact/dimension referential integrity
-graph referential integrity
+orphan keys
+duplicate business keys
+null checks
+row counts
+referential integrity
+graph integrity
 case/SAR consistency
-ETL status/audit
+ETL execution status
 
-Proje doğrulamalarında 11 DQ kontrolü PASS, 0 FAIL olarak sonuçlanmıştır.
+Final validation:
 
-11. KVKK / PII Masking
+11 / 11 DQ checks PASS
 
-BI katmanında ham hesap kimliklerinin doğrudan gösterilmesini azaltmak amacıyla:
+🔐 KVKK / Data Masking
+
+A masked BI view was created to prevent raw account identifiers from being unnecessarily exposed to BI users.
 
 DWH_AML.DIM_HESAP_MASKELI_VW
 
-oluşturulmuştur.
-
-Örnek:
+Example:
 
 C170123456379
-        |
-        v
+      ↓
 C17*******379
 
-Genel BI kullanıcılarının mümkün olduğunca masked view üzerinden çalışması hedeflenmiştir.
+The BI layer is designed to use the masked representation whenever raw account identifiers are not required.
 
-12. Technical Challenges
+📸 BI Dashboards
+
+Built dashboards in Metabase OSS for different operational perspectives:
+
+AML - Uyum
+
+Compliance-focused monitoring.
+
+AML - Risk
+
+Risk and suspicious activity analysis.
+
+AML - Şube
+
+Branch-level analytical view.
+
+Model Performance
+
+Monitoring of alert volume, true positives, false positives, recall and precision.
+
+Dashboard screenshots:
+
+metabase/screenshots/
+
+🧠 Technical Challenges
 SCD Type 2
 
-DIM_HESAP üzerinde hesap geçmişinin korunması için SCD Type 2 uygulanmıştır.
+Maintaining historical account states while preserving a current active record.
 
-Surrogate key, başlangıç/bitiş tarihleri ve aktiflik flag'i kullanılarak hesap geçmişi korunmuştur.
+Large-volume SQL
+
+Working with more than 6.36M transactions in the staging layer.
 
 Recursive Transfer Analysis
 
-Layering analizi için transfer zincirlerinin birden fazla hop üzerinden takip edilmesi hedeflenmiştir.
+Following multi-hop transaction chains for layering detection.
 
-Large-volume Testing
+Rule Validation
 
-Yaklaşık 6.36 milyon staging transferi üzerinde scoring view performansı test edilmiştir.
+Creating controlled synthetic scenarios to verify that AML rules detect the intended behavioral pattern.
 
-Smurfing scoring sorgusu kontrollü performans testinde yaklaşık 0.215 saniyede sonuçlanmıştır.
+Data Quality
 
-Sentetik test sonrasında test verileri temizlenerek baseline veri korunmuştur.
+Validating fact/dimension relationships and preventing orphan records from propagating into analytical layers.
 
-ODI CDC / Journalizing
+CDC / Journalizing
 
-ODI Journalizing / CDC yaklaşımı staging tablosu üzerinde opsiyonel olarak denenmiştir.
+ODI Journalizing was explored as an advanced option. Because PaySim is a static file-based source, a real source CDC scenario does not exist in this project, so CDC was intentionally excluded from the main production flow.
 
-PaySim statik dosya tabanlı olduğu için gerçek bir source CDC senaryosu bulunmamaktadır.
-
-Bu nedenle CDC ana ETL akışına dahil edilmemiştir.
-
-13. Repository Structure
+📁 Repository Structure
 aml-smurfing-detection/
 │
 ├── README.md
-├── .gitignore
 │
 ├── docs/
 │   ├── PORTFOLIO_CHECKLIST.md
-│   ├── architecture/
-│   │   └── architecture.mmd
-│   └── screenshots/
+│   └── architecture/
+│       ├── architecture.mmd
+│       └── Architecture.png
 │
 ├── metabase/
 │   └── screenshots/
@@ -403,83 +337,72 @@ aml-smurfing-detection/
     ├── masking/
     ├── monitoring/
     └── workflow/
+🗃️ SQL Organization
 
-SQL dosyaları konu bazında ayrılmıştır.
+The SQL layer is separated by responsibility:
 
-monitoring, dq, masking ve workflow klasörlerindeki dosyalar ağırlıklı olarak validation, reporting ve operational query amaçlıdır.
-
-14. How to Run
-Prerequisites
-Oracle Database 19c
-ODI 12c
-PaySim dataset
-Docker
-Metabase OSS
-Oracle JDBC driver
-High-level execution flow
-Oracle 19c instance ve listener'ı başlat.
-STG_AML ve DWH_AML şemalarını hazırla.
-PaySim verisini staging katmanına yükle.
-ODI interface ve CKM akışlarını çalıştır.
-Dimension tablolarını yükle.
-FACT_PARA_TRANSFERLERI fact tablosunu oluştur/güncelle.
-AML rule ve CKM sonuçlarını kontrol et.
-Case ve SAR workflow'unu güncelle.
-Graph edge ve graph metrics katmanını yenile.
-DQ kontrollerini çalıştır.
-Masked BI view'larını kullan.
-Metabase OSS'u Docker ile başlat.
-Oracle JDBC driver'ını Metabase plugins klasörüne koy.
-Metabase'i DWH_AML kullanıcısına bağla.
-Dashboard'ları oluştur/güncelle.
-15. Limitations & Future Improvements
-Ground-truth kalitesi artırılabilir.
-AML threshold tuning yapılabilir.
-False-positive azaltmak için feature engineering eklenebilir.
-Gerçek müşteri/KYC kaynağı ile DIM_MUSTERI beslenebilir.
-Gerçek zamanlı CDC kaynağı eklenebilir.
-Oracle Graph üzerinde daha gelişmiş centrality ve community detection algoritmaları uygulanabilir.
-Model drift monitoring genişletilebilir.
-Rule ensemble / hybrid ML yaklaşımı eklenebilir.
-Case prioritization için risk-based scoring geliştirilebilir.
-16. Portfolio Evidence
-
-Projeyi destekleyen kanıtlar:
-
-ODI
-odi-exports/
-
-ODI Designer project export dosyaları burada tutulabilir.
-
-Architecture
-docs/architecture/
-Metabase
-metabase/screenshots/
-
-Dashboard çıktıları burada tutulabilir.
-
-SQL
 sql/
+├── dimensions/     → Dimension definitions / SCD
+├── facts/          → Fact loading logic
+├── rules/          → AML rule logic
+├── graph/          → Graph metrics / validation
+├── dq/             → Data quality checks
+├── masking/        → BI masking
+├── monitoring/     → Performance / operational monitoring
+└── workflow/       → Case / SAR analytical queries
 
-SQL source, rule, fact, graph, DQ ve monitoring dosyaları burada bulunmaktadır.
+This structure keeps business rules, warehouse loading logic and monitoring queries separated.
 
-Gerçek araç çıktısı olmayan örnek veya uydurma screenshot kullanılmamalıdır.
+🔮 Future Improvements
 
-17. Project Outcome
+Potential next steps include:
 
-Bu proje ile:
+AML threshold tuning
+false-positive reduction
+additional feature engineering
+real KYC/customer source integration
+real-time CDC source
+advanced graph centrality / community detection
+model drift monitoring
+hybrid rule + ML detection
+risk-based case prioritization
+📚 Portfolio Evidence
 
-PaySim tabanlı AML staging pipeline
-ODI tabanlı ETL
-SCD Type 2 dimension
-rule-based AML detection
-graph/network risk analysis
-case management
-SAR filing workflow
-model performance measurement
-data quality monitoring
-ETL audit
-BI masking
-Metabase dashboards
+The repository contains real outputs from the development environment:
 
-tek bir uçtan uca analitik mimari altında birleştirilmiştir.
+ODI Designer project XML export
+Architecture diagram
+Metabase dashboard screenshots
+SQL implementation and validation scripts
+
+No fabricated screenshots or placeholder tool exports are used.
+
+🎯 Project Outcome
+
+This project demonstrates an end-to-end Data Warehouse & Business Intelligence architecture built around a real-world analytical problem.
+
+It combines:
+
+Data Engineering
+
+Oracle · ODI · ETL · SQL
+
+Data Warehousing
+
+Star Schema · Fact/Dimension Modeling · SCD Type 2
+
+Analytics
+
+AML Rules · Graph Analysis · Performance Metrics
+
+Data Governance
+
+Data Quality · ETL Audit · Data Masking
+
+Business Intelligence
+
+Metabase · Operational Dashboards
+
+The key objective was not simply to identify suspicious transactions, but to build an analytical platform capable of carrying the data through the complete lifecycle:
+
+Transaction → Detection → Alarm → Case → SAR → BI
