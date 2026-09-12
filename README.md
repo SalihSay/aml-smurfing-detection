@@ -53,7 +53,6 @@ flowchart LR
     H --> N
     K --> N
 
-<img width="1192" height="302" alt="Ekran görüntüsü 2026-09-12 131251" src="https://github.com/user-attachments/assets/1b22c54c-4216-42b0-9acb-62b4639ae2da" />
 
 🔧 What I Built
 1. Data Warehouse
