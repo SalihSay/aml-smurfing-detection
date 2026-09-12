@@ -1,10 +1,12 @@
-<img width="1192" height="302" alt="Ekran görüntüsü 2026-09-12 131251" src="https://github.com/user-attachments/assets/9e271f88-bac7-456b-a455-e4114f7f9317" /># AML Smurfing Detection — Data Warehouse & BI
+<img width="1192" height="302" alt="Ekran görüntüsü 2026-09-12 131251" src="https://github.com/user-attachments/assets/9e271f88-bac7-456b-a455-e4114f7f9317" />
+
+# AML Smurfing Detection — Data Warehouse & BI
 
 **End-to-end Data Warehouse & Business Intelligence project built with Oracle 19c, ODI 12c and Metabase OSS.**
 
-A production-oriented AML analytics platform designed around **6.36M+ financial transactions**, combining dimensional modeling, ETL, SCD Type 2, data quality, rule-based analytics, network analysis and operational BI.
+A portfolio-oriented AML analytics platform built around **6.36M+ financial transactions**, combining dimensional modeling, ETL, SCD Type 2, data quality, rule-based analytics, network analysis and operational BI.
 
-> **Business problem:** Detect suspicious transaction patterns and transform them into an analyzable and operational workflow from **transaction → alarm → case → SAR → BI reporting**.
+> **Business problem:** Detect suspicious transaction patterns and transform them into an analyzable workflow from **transaction → alarm → case → SAR → BI reporting**.
 
 ---
 
@@ -18,7 +20,7 @@ A production-oriented AML analytics platform designed around **6.36M+ financial 
 | Cases | **3,508** |
 | SAR Filings | **175** |
 | DQ Checks | **11 / 11 PASS** |
-| Smurfing Test Precision | **100%** |
+| Synthetic Smurfing Test Precision | **100%** |
 
 ### Core Technology
 
@@ -26,7 +28,7 @@ A production-oriented AML analytics platform designed around **6.36M+ financial 
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -48,69 +50,90 @@ flowchart LR
     G --> K
     H --> K
     J --> K
-```
+🏢 1. Data Warehouse
 
-## What I Built
+The warehouse was designed using a star-schema-oriented dimensional model.
 
-### 1. Data Warehouse
+Dimensions
+7 dimension tables
+Surrogate key approach
+Foreign key relationships
+Historical tracking with SCD Type 2
+DIM_HESAP and DIM_MUSTERI maintain historical versions
+Facts
+FACT_PARA_TRANSFERLERI
+FACT_CASE
+FACT_SAR_FILING
+FACT_MODEL_PERFORMANS
 
-- Oracle 19c üzerinde star-schema tabanlı DWH
-- 7 dimension
-- 4 fact
-- `DIM_HESAP` ve `DIM_MUSTERI` üzerinde SCD Type 2
-- Surrogate key yaklaşımı
-- Foreign key ilişkileri
-- 
-2. ETL with ODI 12c
+The model separates transactional data, operational case management and analytical performance metrics.
 
-Built the ETL flow using Oracle Data Integrator 12c.
+⚙️ 2. ETL with ODI 12c
 
-The pipeline covers:
+The ETL layer was implemented with Oracle Data Integrator 12c.
 
+Pipeline
 PaySim CSV
     ↓
-Staging
+Oracle Staging
     ↓
-ODI ETL
+ODI ETL / Mappings
     ↓
-CKM validation / AML rules
+CKM Validation
     ↓
-Data Warehouse
+AML Rule Processing
+    ↓
+Oracle Data Warehouse
     ↓
 BI / Analytics
 
-ODI was used for data movement, mappings, lookups, integration and CKM-based validation.
+ODI was used for:
 
-📌 ODI Designer project export:
+Data movement
+Mappings
+Lookups
+Dimension loading
+Fact loading
+CKM-based validation
+Integration between staging and DWH layers
+ODI Portfolio Evidence
+
+The repository contains the exported ODI Designer project:
 
 odi-exports/
 
-🚨 AML Rule Engine
+🚨 3. AML Rule Engine
 
 Six AML typologies were implemented at the Oracle / ODI CKM layer.
 
 Smurfing
 
-Detects cases where:
+Detects patterns where:
 
-multiple distinct senders
-transfer money to the same target account
-within a 24-hour window
-followed by a short-time outgoing transaction
+Multiple distinct senders transfer money to the same target account
+Transactions occur within a 24-hour window
+A short-time outgoing transaction follows the incoming transfers
 
-The scoring result is exposed through:
+Scoring view:
 
 STG_AML.SMURFING_SCORE_VW
+
 Structuring
 
 Detects repeated transactions below a defined threshold within a 24-hour window.
 
+Scoring view:
+
 STG_AML.STRUCTURING_SCORE_VW
+
 Layering
 
-Analyzes multi-hop transfer chains using recursive transfer analysis.
+Analyzes multi-hop transaction chains using recursive transfer analysis.
+
+Scoring view:
 
 STG_AML.LAYERING_SCORE_VW
+
 Round Trip
 
 Identifies transaction paths returning to the originating account.
@@ -122,9 +145,9 @@ Detects significant transactions following long periods of account inactivity.
 
 Round Amount
 
-Identifies high-value round-number transactions used as an additional risk signal.
+Identifies high-value round-number transactions as an additional risk signal.
 
-🕸️ Network Risk Analysis
+🕸️ 4. Network Risk Analysis
 
 Transaction relationships were transformed into a graph-oriented analytical layer.
 
@@ -136,16 +159,18 @@ GRAPH_METRICS
 
 Calculates:
 
-incoming connection count
-outgoing connection count
+Incoming connection count
+Outgoing connection count
 
 for active accounts.
 
-The graph layer allows suspicious accounts to be evaluated together with their surrounding transaction network rather than only as isolated transactions.
+This allows suspicious accounts to be evaluated together with their surrounding transaction network rather than only as isolated transactions.
 
-Gephi was intentionally excluded from the final architecture. Network analysis is handled through the Oracle graph layer and Metabase reporting.
+Gephi was intentionally excluded from the final architecture.
 
-🗂️ Operational AML Workflow
+Network analysis is handled through the Oracle graph-oriented layer and Metabase reporting.
+
+🗂️ 5. Operational AML Workflow
 
 The project does not stop at detecting suspicious transactions.
 
@@ -162,22 +187,20 @@ FACT_CASE
 Case Investigation
      ↓
 SAR Filing
-Case distribution
+Case Distribution
 Status	Cases
 ACIK	2,283
 INCELEMEDE	700
 KAPALI	350
 SAR_GONDERILDI	175
-SAR validation
+SAR Validation
 175 SAR records
 175 distinct cases
 1,581,043,000 total related amount
 0 orphan cases
-0 case/SAR mismatch
-📈 Model Performance
-
-Real DWH output:
-
+0 case/SAR mismatches
+📈 6. Model Performance
+Baseline DWH Output
 Metric	Result
 Total Alerts	3,508
 True Positives	287
@@ -185,30 +208,35 @@ False Positives	3,221
 Recall	3.49%
 Precision	8.18%
 
-The result was deliberately reported without artificially improving the metrics.
+The result is reported without artificially improving the metrics.
 
 The high false-positive rate highlights the need for further AML threshold tuning and feature engineering.
 
-🧪 Synthetic Validation
+This is an important part of the project because the objective is not to present artificially strong model metrics, but to demonstrate how analytical results can be measured and monitored inside the DWH/BI architecture.
+
+🧪 7. Synthetic Rule Validation
 
 A controlled Smurfing scenario was injected to validate the rule engine.
 
-Test scenario
+Test Scenario
 6 distinct sender accounts
 5,000 per sender
-same target account
-transactions within a 24-hour window
-short-time outgoing transaction
+Same target account
+Transactions within a 24-hour window
+Short-time outgoing transaction
 Result
 
-Smurfing pattern detected successfully.
+The Smurfing pattern was detected successfully.
 
-Precision:     100%
-False Positive: 0
+Metric	Result
+Precision	100%
+False Positive	0
 
-After validation, synthetic records were removed and the baseline dataset was restored.
+After validation, the synthetic records were removed and the baseline dataset was restored.
 
-✅ Data Quality & Audit
+Note: The 100% precision result belongs to the controlled synthetic validation scenario and should not be interpreted as the baseline production performance of the rule.
+
+✅ 8. Data Quality & Audit
 
 Data quality and ETL monitoring were implemented through:
 
@@ -217,20 +245,19 @@ DWH_AML.ETL_AUDIT_LOG
 
 Validation coverage includes:
 
-orphan keys
-duplicate business keys
-null checks
-row counts
-referential integrity
-graph integrity
-case/SAR consistency
+Orphan keys
+Duplicate business keys
+Null checks
+Row counts
+Referential integrity
+Graph integrity
+Case/SAR consistency
 ETL execution status
-
-Final validation:
+Final Validation
 
 11 / 11 DQ checks PASS
 
-🔐 KVKK / Data Masking
+🔐 9. KVKK / Data Masking
 
 A masked BI view was created to prevent raw account identifiers from being unnecessarily exposed to BI users.
 
@@ -244,36 +271,43 @@ C17*******379
 
 The BI layer is designed to use the masked representation whenever raw account identifiers are not required.
 
-📸 BI Dashboards
+📊 10. BI Dashboards
 
-Built dashboards in Metabase OSS for different operational perspectives:
+Dashboards were built in Metabase OSS for different operational perspectives.
 
-AML - Uyum
+AML — Uyum
 
 Compliance-focused monitoring.
 
-AML - Risk
+AML — Risk
 
 Risk and suspicious activity analysis.
 
-AML - Şube
+AML — Şube
 
 Branch-level analytical view.
 
 Model Performance
 
-Monitoring of alert volume, true positives, false positives, recall and precision.
+Monitoring of:
 
-Dashboard screenshots:
+Alert volume
+True positives
+False positives
+Recall
+Precision
+Dashboard Evidence
+
+Screenshots are available under:
 
 metabase/screenshots/
 
-🧠 Technical Challenges
+🧠 11. Technical Challenges
 SCD Type 2
 
-Maintaining historical account states while preserving a current active record.
+Maintaining historical account states while preserving the current active record.
 
-Large-volume SQL
+Large-Volume SQL
 
 Working with more than 6.36M transactions in the staging layer.
 
@@ -291,9 +325,11 @@ Validating fact/dimension relationships and preventing orphan records from propa
 
 CDC / Journalizing
 
-ODI Journalizing was explored as an advanced option. Because PaySim is a static file-based source, a real source CDC scenario does not exist in this project, so CDC was intentionally excluded from the main production flow.
+ODI Journalizing was explored as an advanced option.
 
-📁 Repository Structure
+Because PaySim is a static file-based source, a real source CDC scenario does not exist in this project, so CDC was intentionally excluded from the main flow.
+
+📁 12. Repository Structure
 aml-smurfing-detection/
 │
 ├── README.md
@@ -318,7 +354,7 @@ aml-smurfing-detection/
     ├── masking/
     ├── monitoring/
     └── workflow/
-🗃️ SQL Organization
+🗃️ 13. SQL Organization
 
 The SQL layer is separated by responsibility:
 
@@ -334,20 +370,20 @@ sql/
 
 This structure keeps business rules, warehouse loading logic and monitoring queries separated.
 
-🔮 Future Improvements
+🔮 14. Future Improvements
 
 Potential next steps include:
 
 AML threshold tuning
-false-positive reduction
-additional feature engineering
-real KYC/customer source integration
-real-time CDC source
-advanced graph centrality / community detection
-model drift monitoring
-hybrid rule + ML detection
-risk-based case prioritization
-📚 Portfolio Evidence
+False-positive reduction
+Additional feature engineering
+Real KYC/customer source integration
+Real-time CDC source
+Advanced graph centrality / community detection
+Model drift monitoring
+Hybrid rule + ML detection
+Risk-based case prioritization
+📚 15. Portfolio Evidence
 
 The repository contains real outputs from the development environment:
 
@@ -361,8 +397,6 @@ No fabricated screenshots or placeholder tool exports are used.
 🎯 Project Outcome
 
 This project demonstrates an end-to-end Data Warehouse & Business Intelligence architecture built around a real-world analytical problem.
-
-It combines:
 
 Data Engineering
 
@@ -384,6 +418,6 @@ Business Intelligence
 
 Metabase · Operational Dashboards
 
-The key objective was not simply to identify suspicious transactions, but to build an analytical platform capable of carrying the data through the complete lifecycle:
+The key objective was not simply to identify suspicious transactions, but to build an analytical platform capable of carrying data through the complete lifecycle:
 
 Transaction → Detection → Alarm → Case → SAR → BI
