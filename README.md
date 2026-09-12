@@ -35,29 +35,39 @@ A portfolio-oriented AML analytics platform built around **6.36M+ financial tran
 The architecture follows an end-to-end data flow:
 
 **PaySim CSV → Oracle Staging → ODI 12c ETL → Oracle DWH → AML Rules → Alarm / Case / SAR → Graph Analysis → Metabase BI**
-🏢 1. Data Warehouse
 
-The warehouse was designed using a star-schema-oriented dimensional model.
+---
 
-Dimensions
-7 dimension tables
-Surrogate key approach
-Foreign key relationships
-Historical tracking with SCD Type 2
-DIM_HESAP and DIM_MUSTERI maintain historical versions
-Facts
-FACT_PARA_TRANSFERLERI
-FACT_CASE
-FACT_SAR_FILING
-FACT_MODEL_PERFORMANS
+## 🏢 1. Data Warehouse
+
+The warehouse was designed using a **star-schema-oriented dimensional model**.
+
+### Dimensions
+
+- 7 dimension tables
+- Surrogate key approach
+- Foreign key relationships
+- Historical tracking with SCD Type 2
+- `DIM_HESAP` and `DIM_MUSTERI` maintain historical versions
+
+### Facts
+
+- `FACT_PARA_TRANSFERLERI`
+- `FACT_CASE`
+- `FACT_SAR_FILING`
+- `FACT_MODEL_PERFORMANS`
 
 The model separates transactional data, operational case management and analytical performance metrics.
 
-⚙️ 2. ETL with ODI 12c
+---
 
-The ETL layer was implemented with Oracle Data Integrator 12c.
+## ⚙️ 2. ETL with ODI 12c
 
-Pipeline
+The ETL layer was implemented with **Oracle Data Integrator 12c**.
+
+### Pipeline
+
+```text
 PaySim CSV
     ↓
 Oracle Staging
@@ -227,9 +237,7 @@ Data quality and ETL monitoring were implemented through:
 
 DWH_AML.DQ_LOG
 DWH_AML.ETL_AUDIT_LOG
-
-Validation coverage includes:
-
+Validation Coverage
 Orphan keys
 Duplicate business keys
 Null checks
@@ -248,8 +256,7 @@ A masked BI view was created to prevent raw account identifiers from being unnec
 
 DWH_AML.DIM_HESAP_MASKELI_VW
 
-Example:
-
+Example
 C170123456379
       ↓
 C17*******379
