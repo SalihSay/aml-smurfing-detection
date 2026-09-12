@@ -30,26 +30,11 @@ A portfolio-oriented AML analytics platform built around **6.36M+ financial tran
 
 ## 🏗️ Architecture
 
-```mermaid
-flowchart LR
-    A[PaySim CSV] --> B[Oracle STG]
-    B --> C[ODI 12c ETL]
-    C --> D[Oracle DWH]
+<img width="1192" height="302" alt="Ekran görüntüsü 2026-09-12 131251" src="https://github.com/user-attachments/assets/9e271f88-bac7-456b-a455-e4114f7f9317" />
 
-    D --> E[AML Rule Engine]
-    E --> F[Alarm / E$]
+The architecture follows an end-to-end data flow:
 
-    D --> G[Case Management]
-    G --> H[SAR Filing]
-
-    D --> I[Graph Edge List]
-    I --> J[Graph Metrics]
-
-    D --> K[Metabase OSS]
-    F --> K
-    G --> K
-    H --> K
-    J --> K
+**PaySim CSV → Oracle Staging → ODI 12c ETL → Oracle DWH → AML Rules → Alarm / Case / SAR → Graph Analysis → Metabase BI**
 🏢 1. Data Warehouse
 
 The warehouse was designed using a star-schema-oriented dimensional model.
